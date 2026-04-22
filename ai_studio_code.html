@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>SakhiCycle 🌸 — AI Period Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ═══ MOOD THEMES ═══ */
+:root{
+  --rose:#E8476A;--rose-l:#F9758F;--rose-p:#FFF0F3;--rose-d:#C2284D;
+  --plum:#7B2D8B;--plum-l:#A855C0;--lav:#EDE7F6;--peach:#FF8C69;
+  --mint:#3DB88B;--sky:#5BA3D9;--cream:#FDF8F0;
+  --td:#2D1B2E;--tm:#6B4C72;--tl:#A889B0;
+  --sh:0 8px 32px rgba(232,71,106,.15);--shl:0 20px 60px rgba(123,45,139,.18);
+  --tr:all .35s cubic-bezier(.4,0,.2,1);
+}
+body.m-happy{--rose:#FF9A3C;--rose-p:#FFF5EB;--plum:#FF6B9D;--rose-l:#FFB347;--tm:#7A4A2E;--tl:#C89060}
+body.m-sad{--rose:#5B8DD9;--rose-p:#EBF2FF;--plum:#3A5FA8;--rose-l:#7BA7E8;--tm:#3A5A8A;--tl:#7090C0}
+body.m-irritable{--rose:#E74C3C;--rose-p:#FEF0EF;--plum:#C0392B;--rose-l:#F1948A}
+body.m-anxious{--rose:#8E44AD;--rose-p:#F5EEF8;--plum:#6C3483;--rose-l:#A569BD}
+body.m-tired{--rose:#78909C;--rose-p:#ECEFF1;--plum:#546E7A;--rose-l:#90A4AE}
+body.m-calm{--rose:#27AE60;--rose-p:#EAFAF1;--plum:#1E8449;--rose-l:#52BE80}
+body.m-emotional{--rose:#2E86C1;--rose-p:#EBF5FB;--plum:#1A5276;--rose-l:#5DADE2}
+body.pain-high{--cream:#F0F4F8;filter:saturate(.85)}
+
+/* ═══ RESET ═══ */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--td);min-height:100vh;overflow-x:hidden;transition:var(--tr)}
+
+/* ═══ SPLASH ═══ */
+#splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#E8476A,#7B2D8B);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s}
+#splash h1{font-family:'Playfair Display',serif;color:#fff;font-size:2.5rem;margin:10px 0 5px}
+#splash p{color:rgba(255,255,255,.8);letter-spacing:1px;font-size:.9rem}
+.splash-bar-wrap{margin-top:32px;width:180px;height:4px;background:rgba(255,255,255,.3);border-radius:99px;overflow:hidden}
+.splash-bar{height:100%;background:#fff;border-radius:99px;animation:sbar 1.8s ease forwards}
+@keyframes sbar{from{width:0}to{width:100%}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.splash-logo{font-size:64px;animation:pulse 1.5s infinite}
+
+/* ═══ AUTH ═══ */
+.overlay{position:fixed;inset:0;z-index:9000;background:linear-gradient(135deg,#E8476A 0%,#7B2D8B 100%);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.ov-card{background:#fff;border-radius:26px;padding:32px 26px;max-width:420px;width:100%;box-shadow:0 40px 80px rgba(0,0,0,.25)}
+.ov-card h2{font-family:'Playfair Display',serif;font-size:1.75rem;color:var(--td);margin:10px 0 6px;text-align:center}
+.ov-card>.sub{color:var(--tm);font-size:.85rem;line-height:1.6;margin-bottom:18px;text-align:center}
+.tabs{display:flex;gap:8px;margin-bottom:18px}
+.tab{flex:1;padding:9px;border:2px solid #EDE7F6;border-radius:11px;background:#fff;cursor:pointer;font-size:.83rem;font-weight:600;color:var(--tm);transition:.2s}
+.tab.active{border-color:var(--rose);background:var(--rose-p);color:var(--rose)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:.78rem;font-weight:600;color:var(--tm);margin-bottom:5px;letter-spacing:.4px}
+.fg input,.fg select,.fg textarea{width:100%;padding:11px 13px;border:2px solid #EDE7F6;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--td);background:#FAFAFA;outline:none;transition:.2s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--rose);background:#fff}
+.key-wrap{position:relative}
+.key-wrap input{padding-right:72px}
+.key-eye{position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:.72rem;color:var(--rose);cursor:pointer;font-weight:600;background:var(--rose-p);padding:3px 8px;border-radius:99px}
+.btn{width:100%;padding:13px;border:none;border-radius:13px;font-family:'DM Sans',sans-serif;font-size:.93rem;font-weight:600;cursor:pointer;transition:.2s}
+.btn-p{background:linear-gradient(135deg,var(--rose),var(--plum));color:#fff;box-shadow:0 8px 22px rgba(232,71,106,.3)}
+.btn-p:hover{transform:translateY(-2px);opacity:.95}
+.btn-p:disabled{opacity:.6;transform:none;cursor:not-allowed}
+.lang-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lang-btn{padding:10px;border:2px solid #EDE7F6;border-radius:11px;background:#fff;cursor:pointer;font-size:.85rem;font-weight:500;color:var(--tm);transition:.2s;text-align:center}
+.lang-btn.active{border-color:var(--rose);background:var(--rose-p);color:var(--rose)}
+
+/* ═══ APP ═══ */
+.app-hdr{background:linear-gradient(135deg,var(--rose),var(--plum));padding:50px 18px 22px;position:relative;overflow:hidden;transition:var(--tr)}
+.app-hdr::before{content:'';position:absolute;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.07);top:-50px;right:-30px}
+.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1}
+.hdr-greet{color:rgba(255,255,255,.8);font-size:.85rem}
+.hdr-name{font-family:'Playfair Display',serif;color:#fff;font-size:1.5rem;margin-top:2px}
+.hdr-btns{display:flex;gap:7px}
+.hdr-btn{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;transition:.2s;color:#fff;}
+
+/* Screens */
+.screen{display:none;padding-bottom:80px;min-height:80vh}
+.screen.active{display:block}
+.scr-hdr{padding:50px 18px 20px;transition:var(--tr)}
+.scr-hdr.rose{background:linear-gradient(135deg,var(--rose),var(--plum))}
+.scr-hdr.plum{background:linear-gradient(135deg,var(--plum-l),var(--plum))}
+.scr-hdr.peach{background:linear-gradient(135deg,var(--peach),var(--rose))}
+.scr-hdr.mint{background:linear-gradient(135deg,var(--mint),var(--sky))}
+.scr-hdr.dark{background:linear-gradient(135deg,var(--td),var(--plum))}
+.scr-hdr h2{font-family:'Playfair Display',serif;color:#fff;font-size:1.5rem;margin-top:4px}
+.scr-hdr p{color:rgba(255,255,255,.8);font-size:.83rem}
+.sec-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--td);padding:16px 18px 9px;font-weight:600}
+
+/* Bottom Nav */
+.bnav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:#fff;border-top:1px solid #F0E4F5;display:flex;justify-content:space-around;padding:7px 0 11px;box-shadow:0 -6px 28px rgba(123,45,139,.1)}
+.ni{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:5px 12px;border-radius:12px;color:var(--tl);font-size:.66rem;font-weight:500;transition:.2s}
+.ni .ico{font-size:19px;transition:.2s}
+.ni.active{color:var(--rose)}
+.ni.active .ico{transform:scale(1.15)}
+
+/* Cards */
+.card{background:#fff;border-radius:20px;margin:0 16px;padding:18px;box-shadow:0 4px 16px rgba(123,45,139,.07)}
+.cycle-card{margin:16px 16px 0;background:#fff;border-radius:20px;padding:20px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.cycle-card::before{content:'';position:absolute;width:160px;height:160px;background:radial-gradient(circle,rgba(232,71,106,.07),transparent 70%);top:-35px;right:-35px;border-radius:50%}
+.cyc-lbl{font-size:.75rem;color:var(--tl);font-weight:600;letter-spacing:.8px;text-transform:uppercase}
+.cyc-status{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--td);margin:4px 0}
+.cyc-desc{font-size:.83rem;color:var(--tm)}
+.ring-wrap{display:flex;justify-content:center;margin:14px 0 8px}
+.ring{position:relative;width:145px;height:145px}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.ring-day{font-size:2.3rem;font-weight:700;color:var(--rose);line-height:1}
+.ring-sub{font-size:.7rem;color:var(--tl);margin-top:2px}
+.phase-pills{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+.ppill{padding:4px 11px;border-radius:99px;font-size:.74rem;font-weight:600}
+.pp-per{background:#FFF0F3;color:var(--rose)}
+.pp-ov{background:#E8F8F3;color:var(--mint)}
+.pp-fer{background:#FFF8E7;color:#E8930A}
+.pp-lut{background:#EDE7F6;color:var(--plum)}
+
+/* Quick Actions & UI Elements */
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:12px 16px 0}
+.qa{background:#fff;border-radius:16px;padding:14px;box-shadow:0 4px 14px rgba(123,45,139,.07);cursor:pointer;transition:.2s;border:1.5px solid transparent}
+.qa:hover{transform:translateY(-2px);box-shadow:var(--sh);border-color:rgba(232,71,106,.2)}
+.qa-ico{font-size:24px;margin-bottom:5px}
+.qa-t{font-size:.81rem;font-weight:600;color:var(--td)}
+.qa-s{font-size:.71rem;color:var(--tl);margin-top:1px}
+.mood-strip{display:flex;gap:7px;padding:0 16px;overflow-x:auto;scrollbar-width:none}
+.mood-strip::-webkit-scrollbar{display:none}
+.mb{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:58px;padding:9px 5px;border-radius:13px;cursor:pointer;border:2px solid transparent;background:#fff;box-shadow:0 3px 10px rgba(0,0,0,.06);transition:.2s;flex-shrink:0}
+.mb.sel{border-color:var(--rose);background:var(--rose-p)}
+.mb .me{font-size:24px}
+.mb .ml{font-size:.67rem;color:var(--tm);font-weight:500}
+.sym-grid{display:flex;flex-wrap:wrap;gap:7px;padding:0 16px}
+.chip{display:flex;align-items:center;gap:4px;padding:6px 11px;border-radius:99px;border:2px solid #EDE7F6;background:#fff;cursor:pointer;font-size:.78rem;font-weight:500;color:var(--tm);transition:.2s}
+.chip.active{border-color:var(--rose);background:var(--rose-p);color:var(--rose)}
+.h2o-row{display:flex;gap:6px;padding:0 16px;flex-wrap:wrap}
+.cup{width:42px;height:42px;border-radius:11px;border:2px solid #B3DFF4;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:.2s;background:#fff}
+.cup.filled{background:#B3DFF4;border-color:var(--sky)}
+.pain-wrap{padding:0 16px}
+.pain-slider{width:100%;-webkit-appearance:none;height:8px;border-radius:99px;outline:none;margin:13px 0;background:linear-gradient(to right,var(--mint),#F4C430,var(--rose))}
+.pain-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--rose);cursor:pointer;box-shadow:0 4px 10px rgba(232,71,106,.3)}
+.pain-lbls{display:flex;justify-content:space-between;font-size:.7rem;color:var(--tl)}
+.tip-card{background:linear-gradient(135deg,var(--lav),#fff);border-radius:17px;margin:0 16px;padding:16px;border:1px solid rgba(123,45,139,.1);display:flex;gap:11px;align-items:flex-start}
+.tip-ico{font-size:26px;flex-shrink:0}
+.tip-t{font-size:.85rem;font-weight:600;color:var(--plum)}
+.tip-s{font-size:.77rem;color:var(--tm);margin-top:3px;line-height:1.55}
+.aff-card{margin:0 16px;padding:22px;border-radius:20px;background:linear-gradient(135deg,var(--peach),var(--rose),var(--plum));color:#fff;text-align:center;box-shadow:var(--shl)}
+.aff-q{font-family:'Playfair Display',serif;font-size:1.1rem;line-height:1.65;font-style:italic;margin-bottom:12px}
+.aff-btn{padding:8px 20px;border-radius:99px;border:2px solid rgba(255,255,255,.5);background:rgba(255,255,255,.2);color:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.81rem;font-weight:600;transition:.2s}
+.aff-btn:hover{background:rgba(255,255,255,.35)}
+.btn-s{border:2px solid var(--rose);background:#fff;color:var(--rose);margin-top:8px}
+
+/* Calendar */
+.cal-nav-row{display:flex;justify-content:space-between;align-items:center;padding:16px 16px 0}
+.cal-month-lbl{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--td)}
+.cal-btns{display:flex;gap:7px}
+.cal-btn{width:32px;height:32px;border-radius:50%;border:2px solid #EDE7F6;background:#fff;cursor:pointer;font-size:.9rem;color:var(--tm);display:flex;align-items:center;justify-content:center;transition:.2s}
+.cal-btn:hover{border-color:var(--rose);color:var(--rose)}
+.cal-wrap{padding:12px 16px}
+.cal-days-hdr{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-dh{text-align:center;font-size:.7rem;font-weight:600;color:var(--tl);padding:4px 0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cd{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:.79rem;cursor:pointer;font-weight:500;color:var(--td);transition:.2s;border:2px solid transparent;position:relative}
+.cd:hover:not(.empty){background:var(--rose-p);color:var(--rose)}
+.cd.today{background:var(--td);color:#fff;font-weight:700}
+.cd.period{background:var(--rose);color:#fff}
+.cd.predicted{background:#FFC8D3;color:var(--rose-d)}
+.cd.fertile{background:#D4F1E8;color:var(--mint)}
+.cd.ovulation{background:var(--mint);color:#fff;font-weight:700}
+.cd.empty{pointer-events:none}
+.cd.picked{border-color:var(--rose);box-shadow:0 0 0 2px var(--rose-p)}
+.cal-legend{display:flex;flex-wrap:wrap;gap:9px;padding:0 16px 12px}
+.leg{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--tm)}
+.leg-dot{width:9px;height:9px;border-radius:50%}
+
+/* Modals */
+.modal{display:none;position:fixed;inset:0;z-index:500;background:rgba(45,27,46,.6);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center}
+.modal.show{display:flex}
+.modal-sheet{background:#fff;border-radius:24px 24px 0 0;padding:22px 18px 34px;width:100%;max-width:500px;animation:su .3s ease;max-height:88vh;overflow-y:auto}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:34px;height:4px;background:#EDE7F6;border-radius:99px;margin:0 auto 16px}
+.modal-title{font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:12px}
+.flow-sel{display:flex;gap:7px;margin-bottom:12px}
+.fb{flex:1;padding:10px 5px;border-radius:11px;border:2px solid #EDE7F6;background:#fff;cursor:pointer;text-align:center;font-size:.79rem;font-weight:600;color:var(--tm);transition:.2s}
+.fb.active{border-color:var(--rose);background:var(--rose-p);color:var(--rose)}
+.fb .fe{font-size:17px;display:block;margin-bottom:3px}
+
+/* AI Chat */
+.ai-fab{position:fixed;bottom:80px;right:15px;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--rose),var(--plum));border:none;cursor:pointer;font-size:22px;box-shadow:0 8px 22px rgba(232,71,106,.4);z-index:200;display:flex;align-items:center;justify-content:center;transition:.2s;animation:fabp 3s infinite}
+@keyframes fabp{0%,100%{box-shadow:0 8px 22px rgba(232,71,106,.4)}50%{box-shadow:0 8px 30px rgba(232,71,106,.6),0 0 0 7px rgba(232,71,106,.1)}}
+.ai-panel{position:fixed;bottom:0;left:0;right:0;height:78vh;background:#fff;border-radius:22px 22px 0 0;z-index:300;transform:translateY(100%);transition:transform .33s cubic-bezier(.4,0,.2,1);box-shadow:0 -18px 55px rgba(123,45,139,.2);display:flex;flex-direction:column}
+.ai-panel.open{transform:translateY(0)}
+.ai-hdr{background:linear-gradient(135deg,var(--rose),var(--plum));border-radius:22px 22px 0 0;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.ai-hdr-l h3{font-family:'Playfair Display',serif;color:#fff;font-size:1.05rem}
+.ai-hdr-l p{color:rgba(255,255,255,.8);font-size:.72rem;margin-top:1px}
+.ai-close{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center}
+.ai-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:9px}
+.cmsg{max-width:86%;padding:11px 13px;border-radius:15px;font-size:.86rem;line-height:1.55;animation:fiu .3s ease}
+@keyframes fiu{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.cmsg.user{background:linear-gradient(135deg,var(--rose),var(--plum));color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.cmsg.bot{background:var(--rose-p);color:var(--td);align-self:flex-start;border-bottom-left-radius:4px}
+.ai-inp-row{display:flex;gap:7px;padding:9px 14px 16px;flex-shrink:0;border-top:1px solid #F5EEF8}
+.ai-inp{flex:1;padding:10px 13px;border:2px solid #EDE7F6;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:.86rem;outline:none;color:var(--td);transition:.2s}
+.ai-send{width:40px;height:40px;border-radius:11px;border:none;background:linear-gradient(135deg,var(--rose),var(--plum));color:#fff;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* Wellness & Other Utils */
+.well-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:0 16px}
+.wc{background:#fff;border-radius:17px;padding:16px;box-shadow:0 4px 13px rgba(0,0,0,.06);cursor:pointer;transition:.2s;border:1.5px solid transparent}
+.wc-ico{font-size:28px;margin-bottom:6px}
+.wc-t{font-size:.82rem;font-weight:600;color:var(--td)}
+.wc-s{font-size:.71rem;color:var(--tl);margin-top:2px}
+.prof-hdr{display:flex;align-items:center;gap:13px;background:#fff;border-radius:17px;padding:16px;box-shadow:0 4px 14px rgba(0,0,0,.06);margin:0 16px 13px}
+.prof-av{width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--rose),var(--plum));display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.prof-name{font-family:'Playfair Display',serif;font-size:1.15rem}
+.prof-sub{font-size:.78rem;color:var(--tl);margin-top:2px}
+.set-row{display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:13px;padding:13px 15px;margin:0 16px 8px;box-shadow:0 2px 8px rgba(0,0,0,.04);cursor:pointer}
+.set-l{display:flex;align-items:center;gap:9px}
+.set-ico{font-size:17px}
+.set-lbl{font-size:.85rem;font-weight:500;color:var(--td)}
+.log-entry{background:#fff;border-radius:15px;padding:14px;box-shadow:0 3px 10px rgba(0,0,0,.05);margin:0 16px 9px;display:flex;gap:11px;align-items:flex-start}
+.log-badge{background:var(--rose);color:#fff;border-radius:9px;padding:4px 9px;font-size:.69rem;font-weight:700;flex-shrink:0;text-align:center;min-width:44px}
+.log-det h4{font-size:.84rem;font-weight:600;color:var(--td)}
+.log-det p{font-size:.76rem;color:var(--tm);margin-top:2px}
+
+.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:var(--td);color:#fff;padding:10px 20px;border-radius:99px;font-size:.83rem;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+.toast.show{opacity:1}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fadeIn .45s ease}
+.empty{text-align:center;padding:32px 20px;color:var(--tl);font-size:.85rem}
+.empty .e-ico{font-size:44px;display:block;margin-bottom:10px}
+.ai-badge{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;background:var(--rose-p);color:var(--rose);border-radius:99px;padding:2px 8px;font-weight:600;vertical-align:middle;margin-left:6px}
+</style>
+
+<!-- 
+  Setup Global Functions Map so the HTML can call the Module functions
+-->
+<script>
+  window.AppBridge = {};
+  const bridge = (fnName) => (...args) => {
+    if (window.AppBridge[fnName]) return window.AppBridge[fnName](...args);
+    console.warn("App is still loading...");
+  };
+</script>
+</head>
+<body>
+
+<!-- ═══ SPLASH ═══ -->
+<div id="splash">
+  <div class="splash-logo">🌸</div>
+  <h1>SakhiCycle</h1>
+  <p>Har Ladki Ki Sabse Badi Sakhi</p>
+  <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
+</div>
+
+<!-- ═══ AUTH OVERLAY (LOGIN/SIGNUP) ═══ -->
+<div class="overlay" id="auth-ov" style="display:none">
+  <div class="ov-card fi">
+    <div style="font-size:44px;text-align:center">🌸</div>
+    <h2>Welcome to Sakhi</h2>
+    <p class="sub">Your safe, private space for menstrual health.</p>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-login" onclick="bridge('switchTab')('login')">Log In</button>
+      <button class="tab" id="tab-signup" onclick="bridge('switchTab')('signup')">Sign Up</button>
+    </div>
+    <div id="auth-form">
+      <div class="fg" id="fg-name" style="display:none">
+        <label>YOUR NAME</label>
+        <input type="text" id="inp-aname" placeholder="Enter your name...">
+      </div>
+      <div class="fg" id="fg-age" style="display:none">
+        <label>AGE</label>
+        <input type="number" id="inp-age" placeholder="Your age" min="10" max="60">
+      </div>
+      <div class="fg">
+        <label>EMAIL</label>
+        <input type="email" id="inp-email" placeholder="your@email.com">
+      </div>
+      <div class="fg">
+        <label>PASSWORD</label>
+        <div class="key-wrap">
+          <input type="password" id="inp-pwd" placeholder="••••••••">
+          <span class="key-eye" onclick="bridge('togglePwd')('inp-pwd',this)">Show</span>
+        </div>
+      </div>
+      <div id="fg-onboard" style="display:none">
+        <div class="fg">
+          <label>LAST PERIOD START DATE</label>
+          <input type="date" id="inp-lp">
+        </div>
+        <div class="fg">
+          <label>AVERAGE CYCLE LENGTH (DAYS)</label>
+          <select id="inp-cl">
+            <option value="21">21</option><option value="24">24</option>
+            <option value="28" selected>28 (average)</option><option value="30">30</option>
+            <option value="32">32</option><option value="35">35</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>AVERAGE PERIOD DURATION (DAYS)</label>
+          <select id="inp-pd">
+            <option value="3">3</option><option value="4">4</option>
+            <option value="5" selected>5</option><option value="6">6</option><option value="7">7</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>LANGUAGE</label>
+          <div class="lang-grid">
+            <button class="lang-btn active" onclick="bridge('selLang')(this,'en')">🇬🇧 English</button>
+            <button class="lang-btn" onclick="bridge('selLang')(this,'hi')">🇮🇳 हिंदी</button>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-p" onclick="bridge('doAuth')()" id="auth-btn">Log In</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAIN APP ═══ -->
+<div id="app" style="display:none">
+
+  <!-- HEADER -->
+  <div class="app-hdr" id="app-hdr">
+    <div class="hdr-top">
+      <div>
+        <div class="hdr-greet" id="hdr-greet">Good morning,</div>
+        <div class="hdr-name" id="hdr-name">Sakhi 🌸</div>
+      </div>
+      <div class="hdr-btns">
+        <div class="hdr-btn" onclick="bridge('showScreen')('logbook')" title="Logbook">📋</div>
+        <div class="hdr-btn" onclick="bridge('showScreen')('profile')" title="Profile">👤</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── HOME ── -->
+  <div class="screen active" id="screen-home">
+    <div class="cycle-card fi">
+      <div class="cyc-lbl">YOUR CYCLE</div>
+      <div class="cyc-status" id="cyc-status">Loading...</div>
+      <div class="cyc-desc" id="cyc-desc"></div>
+      <div class="ring-wrap">
+        <div class="ring">
+          <svg width="145" height="145" viewBox="0 0 145 145">
+            <circle cx="72.5" cy="72.5" r="62" fill="none" stroke="#F5E6FA" stroke-width="9"/>
+            <circle id="ring-prog" cx="72.5" cy="72.5" r="62" fill="none" stroke="url(#rg)" stroke-width="9" stroke-linecap="round" stroke-dasharray="389.5" stroke-dashoffset="389.5" style="transition:stroke-dashoffset 1.2s ease" transform="rotate(-90 72.5 72.5)"/>
+            <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F9758F"/><stop offset="100%" stop-color="#7B2D8B"/></linearGradient></defs>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-day" id="ring-day">--</div>
+            <div class="ring-sub">Day of cycle</div>
+          </div>
+        </div>
+      </div>
+      <div class="phase-pills" id="phase-pills"></div>
+    </div>
+
+    <div class="qa-grid">
+      <div class="qa" onclick="bridge('openLogModal')()"><div class="qa-ico">🩸</div><div class="qa-t">Log Period</div><div class="qa-s">Track flow</div></div>
+      <div class="qa" onclick="bridge('showScreen')('calendar')"><div class="qa-ico">📅</div><div class="qa-t">Calendar</div><div class="qa-s">View predictions</div></div>
+      <div class="qa" onclick="bridge('showScreen')('wellness')"><div class="qa-ico">🧘‍♀️</div><div class="qa-t">Wellness</div><div class="qa-s">Mind & body care</div></div>
+      <div class="qa" onclick="bridge('showScreen')('logbook')"><div class="qa-ico">📋</div><div class="qa-t">Logbook</div><div class="qa-s">All history</div></div>
+    </div>
+
+    <div class="sec-title">How are you feeling? 💭</div>
+    <div class="mood-strip">
+      <div class="mb" onclick="bridge('selectMood')(this,'😊','Happy','happy')"><span class="me">😊</span><span class="ml">Happy</span></div>
+      <div class="mb" onclick="bridge('selectMood')(this,'😔','Sad','sad')"><span class="me">😔</span><span class="ml">Sad</span></div>
+      <div class="mb" onclick="bridge('selectMood')(this,'😤','Irritable','irritable')"><span class="me">😤</span><span class="ml">Irritable</span></div>
+      <div class="mb" onclick="bridge('selectMood')(this,'😰','Anxious','anxious')"><span class="me">😰</span><span class="ml">Anxious</span></div>
+      <div class="mb" onclick="bridge('selectMood')(this,'😴','Tired','tired')"><span class="me">😴</span><span class="ml">Tired</span></div>
+    </div>
+
+    <div class="sec-title">Log Symptoms 📝</div>
+    <div class="sym-grid" id="home-symptoms">
+      <div class="chip" onclick="bridge('toggleSymptom')(this)">🤕 Cramps</div>
+      <div class="chip" onclick="bridge('toggleSymptom')(this)">🤢 Nausea</div>
+      <div class="chip" onclick="bridge('toggleSymptom')(this)">😴 Fatigue</div>
+      <div class="chip" onclick="bridge('toggleSymptom')(this)">🤯 Headache</div>
+      <div class="chip" onclick="bridge('toggleSymptom')(this)">🎈 Bloating</div>
+      <div class="chip" onclick="bridge('toggleSymptom')(this)">🔙 Back Pain</div>
+    </div>
+    <div style="padding:8px 16px 0"><button class="btn btn-p" style="border-radius:11px;padding:10px" onclick="bridge('saveSymptoms')()">Save Symptoms ✓</button></div>
+
+    <div class="sec-title">Hydration Today 💧</div>
+    <div class="h2o-row" id="h2o-cups"></div>
+    <div style="padding:6px 16px 0;font-size:.78rem;color:var(--tl)" id="h2o-lbl">0 / 8 glasses</div>
+
+    <div class="sec-title">Pain Level 🌡️</div>
+    <div class="pain-wrap">
+      <input type="range" class="pain-slider" min="0" max="10" value="0" id="pain-sl" oninput="bridge('updatePain')(this.value)">
+      <div class="pain-lbls"><span>😊 None</span><span>😣 Moderate</span><span>😭 Severe</span></div>
+      <div id="pain-txt" style="text-align:center;font-size:.82rem;color:var(--tm);margin-top:6px"></div>
+    </div>
+
+    <div class="sec-title">Daily Affirmation ✨ <span class="ai-badge">AI</span></div>
+    <div class="aff-card">
+      <div class="aff-q" id="aff-text">Loading your personalized affirmation...</div>
+      <button class="aff-btn" onclick="bridge('loadAffirmation')()">New Affirmation 🌸</button>
+    </div>
+    <br><br>
+  </div>
+
+  <!-- ── CALENDAR ── -->
+  <div class="screen" id="screen-calendar">
+    <div class="scr-hdr rose"><p>Your cycle at a glance</p><h2>Calendar 📅</h2></div>
+    <div class="cal-nav-row"><div class="cal-month-lbl" id="cal-month"></div><div class="cal-btns"><button class="cal-btn" onclick="bridge('chMonth')(-1)">‹</button><button class="cal-btn" onclick="bridge('chMonth')(1)">›</button></div></div>
+    <div class="cal-wrap"><div class="cal-days-hdr"><div class="cal-dh">Su</div><div class="cal-dh">Mo</div><div class="cal-dh">Tu</div><div class="cal-dh">We</div><div class="cal-dh">Th</div><div class="cal-dh">Fr</div><div class="cal-dh">Sa</div></div><div class="cal-grid" id="cal-grid"></div></div>
+    <div class="cal-legend">
+      <div class="leg"><div class="leg-dot" style="background:var(--rose)"></div>Period</div>
+      <div class="leg"><div class="leg-dot" style="background:#FFC8D3"></div>Predicted</div>
+      <div class="leg"><div class="leg-dot" style="background:var(--mint)"></div>Ovulation</div>
+      <div class="leg"><div class="leg-dot" style="background:#D4F1E8"></div>Fertile</div>
+    </div>
+    <div class="sec-title">Quick Log Period</div>
+    <div class="card"><button class="btn btn-p" onclick="bridge('openLogModal')()">Log Period Today ✓</button></div><br>
+  </div>
+
+  <!-- ── WELLNESS ── -->
+  <div class="screen" id="screen-wellness">
+    <div class="scr-hdr plum"><p>Mind & Body</p><h2>Wellness Center 🧘‍♀️</h2></div>
+    <div class="well-grid" style="margin-top:20px">
+      <div class="wc" onclick="bridge('toggleSection')('breathe-sec')"><div class="wc-ico">🫁</div><div class="wc-t">Breathe</div><div class="wc-s">Relaxation</div></div>
+      <div class="wc" onclick="bridge('toggleSection')('remedy-sec')"><div class="wc-ico">🌿</div><div class="wc-t">Remedies</div><div class="wc-s">Natural relief</div></div>
+    </div>
+
+    <div id="breathe-sec" style="display:none; margin-top:20px;">
+      <div class="sec-title">4-7-8 Breathing Exercise 🫁</div>
+      <div style="text-align:center;color:var(--tm);padding:0 16px;">Inhale for 4s, hold for 7s, exhale for 8s. Helps with cramps and anxiety.</div>
+    </div>
+
+    <div id="remedy-sec" style="display:none; margin-top:20px;">
+      <div class="sec-title">Desi Home Remedies 🌿</div>
+      <div class="card">
+        <p><strong>🫖 Ajwain Water:</strong> Boil 1 tsp ajwain in 1 cup water. Drink warm.</p><br>
+        <p><strong>🍫 Dark Chocolate + Gur:</strong> Boosts iron & magnesium.</p><br>
+        <p><strong>🌡️ Hot Water Bottle:</strong> Apply on lower abdomen for 15-20 mins.</p>
+      </div>
+    </div><br>
+  </div>
+
+  <!-- ── LOGBOOK ── -->
+  <div class="screen" id="screen-logbook">
+    <div class="scr-hdr dark"><p>All your records</p><h2>Logbook 📋</h2></div>
+    <div class="sec-title">Recent Logs <button style="font-size:.78rem;padding:6px 12px;border-radius:99px;border:1.5px solid var(--rose);background:#fff;color:var(--rose);cursor:pointer;font-weight:600" onclick="bridge('loadLogbook')()">↺ Refresh</button></div>
+    <div id="logbook-list"></div><br><br>
+  </div>
+
+  <!-- ── PROFILE ── -->
+  <div class="screen" id="screen-profile">
+    <div class="scr-hdr dark"><p>Your settings</p><h2>My Profile 👤</h2></div>
+    <div style="padding:14px 0">
+      <div class="prof-hdr">
+        <div class="prof-av" id="prof-av">🌸</div>
+        <div>
+          <div class="prof-name" id="prof-name">Sakhi</div>
+          <div class="prof-sub" id="prof-sub">SakhiCycle Member 💜</div>
+        </div>
+      </div>
+      <div class="set-row" onclick="bridge('doLogout')()"><div class="set-l"><span class="set-ico">🚪</span><span class="set-lbl" style="color:var(--rose)">Log Out</span></div></div>
+    </div><br><br>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bnav">
+    <div class="ni active" onclick="bridge('showScreen')('home')" id="nav-home"><span class="ico">🏠</span><span>Home</span></div>
+    <div class="ni" onclick="bridge('showScreen')('calendar')" id="nav-calendar"><span class="ico">📅</span><span>Calendar</span></div>
+    <div class="ni" onclick="bridge('showScreen')('wellness')" id="nav-wellness"><span class="ico">🧘‍♀️</span><span>Wellness</span></div>
+    <div class="ni" onclick="bridge('showScreen')('logbook')" id="nav-logbook"><span class="ico">📋</span><span>Logbook</span></div>
+    <div class="ni" onclick="bridge('showScreen')('profile')" id="nav-profile"><span class="ico">👤</span><span>Profile</span></div>
+  </div>
+
+  <!-- AI FAB & CHAT -->
+  <button class="ai-fab" onclick="bridge('toggleChat')()" id="ai-fab">🤖</button>
+  <div class="ai-panel" id="ai-panel">
+    <div class="ai-hdr">
+      <div class="ai-hdr-l"><h3>Sakhi AI 💜</h3><p id="ai-context-lbl">Emotionally intelligent assistant</p></div>
+      <button class="ai-close" onclick="bridge('toggleChat')()">✕</button>
+    </div>
+    <div class="ai-msgs" id="ai-msgs">
+      <div class="cmsg bot">Namaste! 🌸 I'm Sakhi. I'm here to support you through every phase of your cycle. How are you feeling today?</div>
+    </div>
+    <div class="ai-inp-row">
+      <input class="ai-inp" id="ai-inp" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')bridge('sendChat')()">
+      <button class="ai-send" onclick="bridge('sendChat')()">➤</button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- MODALS -->
+<div class="modal" id="log-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Log Period Today 🩸</div>
+    <div class="flow-sel" id="modal-flow-sel">
+      <div class="fb" onclick="bridge('selFlow')(this,'light')"><span class="fe">💧</span>Light</div>
+      <div class="fb active" onclick="bridge('selFlow')(this,'medium')"><span class="fe">🩸</span>Medium</div>
+      <div class="fb" onclick="bridge('selFlow')(this,'heavy')"><span class="fe">🌊</span>Heavy</div>
+    </div>
+    <div class="fg"><label>NOTES (OPTIONAL)</label><textarea id="log-notes" style="height:75px" placeholder="Any additional notes..."></textarea></div>
+    <button class="btn btn-p" style="border-radius:11px;padding:12px;margin-top:10px" onclick="bridge('confirmLog')()">Save Log ✓</button>
+    <button class="btn btn-s" style="border-radius:11px;padding:11px" onclick="bridge('closeModal')('log-modal')">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Splash Handling (Runs immediately) -->
+<script>
+  window.onload = () => {
+    setTimeout(()=>{
+      document.getElementById('splash').style.opacity='0';
+      setTimeout(()=>{
+        document.getElementById('splash').style.display='none';
+      },800);
+    },2000);
+
+    const d=new Date(); d.setDate(d.getDate()-14);
+    const lp=document.getElementById('inp-lp');
+    if(lp) lp.value=d.toISOString().split('T')[0];
+  }
+</script>
+
+<!-- ==============================================
+     JAVASCRIPT MODULE (Firebase v10.13.0 Stable)
+     ============================================== -->
+<script type="module">
+  // Using a stable, highly compatible recent version of Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  // Configuration provided by user
+  const firebaseConfig = {
+    apiKey: "AIzaSyBx0qQrdwUHx17OBSd_eUQTntVL9vXlRYU",
+    authDomain: "sakhi-cycle.firebaseapp.com",
+    projectId: "sakhi-cycle",
+    storageBucket: "sakhi-cycle.firebasestorage.app",
+    messagingSenderId: "357032557348",
+    appId: "1:357032557348:web:e8794599eacec7bff8d1b1",
+    measurementId: "G-6DYKC4E3LH"
+  };
+
+  // User's Gemini API Key
+  const GEMINI_API_KEY = "AIzaSyBVxcfCzNRsIBqC_6IFv__Kxg8sVQ5TDNU";
+
+  let auth, db, app;
+  
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+  } catch (error) {
+    console.error("Firebase Initialization Error:", error);
+    showToast("Error connecting to Firebase.");
+  }
+
+  let currentUser = null;
+  let userProfile = null;
+  
+  let S = {
+    cycleLen: 28, periodDur: 5, lastPeriod: null, dayOfCycle: 1, phase: 'follicular', 
+    mood: null, moodClass: null, symptoms: [], painLevel: 0, selectedFlow: 'medium', selectedLang: 'en',
+    calMonth: new Date().getMonth(), calYear: new Date().getFullYear(), todayHydration: 0
+  };
+
+  /* ════════════════════════════════════════
+     GEMINI AI
+     ════════════════════════════════════════ */
+  async function gemini(prompt, sysPrompt='', temp=0.9){
+    const body = {
+      contents: [{parts: [{text: prompt}]}],
+      generationConfig: {maxOutputTokens: 800, temperature: temp}
+    };
+    if(sysPrompt) body.systemInstruction = {parts: [{text: sysPrompt}]};
+    
+    try {
+        const r = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+          {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}
+        );
+        if(!r.ok) throw new Error('Gemini API Error');
+        const d = await r.json();
+        return d.candidates[0]?.content?.parts[0]?.text || '';
+    } catch(e) {
+        console.error(e);
+        throw e;
+    }
+  }
+
+  /* ════════════════════════════════════════
+     UI & UTILITIES
+     ════════════════════════════════════════ */
+  function showToast(msg){
+    const t=document.getElementById('toast');
+    t.textContent=msg; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2800);
+  }
+
+  function togglePwd(id, btn){
+    const inp = document.getElementById(id);
+    if(inp.type==='password'){ inp.type='text'; btn.textContent='Hide'; }
+    else{ inp.type='password'; btn.textContent='Show'; }
+  }
+
+  let authMode = 'login';
+  function switchTab(mode){
+    authMode = mode;
+    document.getElementById('tab-login').classList.toggle('active', mode==='login');
+    document.getElementById('tab-signup').classList.toggle('active', mode==='signup');
+    document.getElementById('fg-name').style.display = mode==='signup'?'block':'none';
+    document.getElementById('fg-age').style.display = mode==='signup'?'block':'none';
+    document.getElementById('fg-onboard').style.display = mode==='signup'?'block':'none';
+    document.getElementById('auth-btn').textContent = mode==='login'?'Log In':'Create Account 🌸';
+  }
+
+  function selLang(btn, lang){
+    document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); S.selectedLang = lang;
+  }
+
+  /* ════════════════════════════════════════
+     AUTH LOGIC
+     ════════════════════════════════════════ */
+  async function doAuth(){
+    const email = document.getElementById('inp-email').value.trim();
+    const pwd = document.getElementById('inp-pwd').value;
+    if(!email||!pwd){ showToast('Please enter email and password'); return; }
+    
+    const btn = document.getElementById('auth-btn');
+    btn.innerHTML='<span class="spin"></span>Processing...'; btn.disabled=true;
+    
+    try{
+      if(authMode==='login'){
+        await signInWithEmailAndPassword(auth, email, pwd);
+      } else {
+        const name = document.getElementById('inp-aname').value.trim()||'Sakhi';
+        const age = parseInt(document.getElementById('inp-age').value)||18;
+        const cl = parseInt(document.getElementById('inp-cl').value)||28;
+        const pd = parseInt(document.getElementById('inp-pd').value)||5;
+        const lp = document.getElementById('inp-lp').value || new Date().toISOString().split('T')[0];
+        
+        const cred = await createUserWithEmailAndPassword(auth, email, pwd);
+        
+        try {
+            // Save profile to Firestore
+            await setDoc(doc(db, 'users', cred.user.uid), {
+                name, age, language: S.selectedLang,
+                cycle_length: cl, period_duration: pd, last_period_date: lp,
+                avatar_emoji:'🌸'
+            }, { merge: true });
+        } catch(dbErr) {
+            console.error(dbErr);
+            alert("Warning: User created, but Firestore database access failed. Make sure your Firestore rules are set to Test Mode.");
+        }
+      }
+    } catch(e){
+      showToast('❌ ' + e.message);
+    } finally {
+      btn.innerHTML = authMode==='login'?'Log In':'Create Account 🌸';
+      btn.disabled=false;
+    }
+  }
+
+  async function doLogout(){
+    await signOut(auth);
+    currentUser = null; userProfile = null;
+    document.getElementById('app').style.display='none';
+    document.getElementById('auth-ov').style.display='flex';
+    showToast('Logged out 👋');
+  }
+
+  /* ════════════════════════════════════════
+     APP LOGIC & FIRESTORE
+     ════════════════════════════════════════ */
+  async function loadProfile(){
+    if(!currentUser) return;
+    try {
+        const docSnap = await getDoc(doc(db, 'users', currentUser.uid));
+        if(docSnap.exists()){
+            userProfile = docSnap.data();
+            S.cycleLen = userProfile.cycle_length || 28;
+            S.periodDur = userProfile.period_duration || 5;
+            S.lastPeriod = userProfile.last_period_date;
+        }
+    } catch (e) {
+        console.error("Firestore Load Profile Error:", e);
+    }
+  }
+
+  function showApp(){
+    document.getElementById('auth-ov').style.display='none';
+    document.getElementById('app').style.display='block';
+    
+    if(userProfile) {
+        document.getElementById('hdr-name').textContent = (userProfile.name||'Sakhi') + ' 🌸';
+        document.getElementById('prof-name').textContent = userProfile.name||'Sakhi';
+    }
+    updateCycleRing(); buildCalendar(); renderCups(); loadAffirmation();
+  }
+
+  function getDayOfCycle(){
+    if(!S.lastPeriod) return 1;
+    const diff = Math.floor((Date.now()-new Date(S.lastPeriod))/(864e5));
+    return ((diff % S.cycleLen) + S.cycleLen) % S.cycleLen + 1;
+  }
+
+  function getPhase(day){
+    const ov = Math.round(S.cycleLen/2);
+    if(day<=S.periodDur) return 'period';
+    if(day>=ov-2&&day<=ov+2) return day===ov?'ovulation':'fertile';
+    if(day>ov+2) return 'luteal';
+    return 'follicular';
+  }
+
+  function updateCycleRing(){
+    const day = getDayOfCycle(); S.dayOfCycle=day; S.phase = getPhase(day);
+    const prog = day/S.cycleLen;
+    document.getElementById('ring-prog').style.strokeDashoffset = (2*Math.PI*62)*(1-prog);
+    document.getElementById('ring-day').textContent = day;
+    
+    const phaseInfo = {
+      period:{label:'Period Phase',desc:'Take it easy today 💜',pills:['🩸 Period','🌿 Rest Day']},
+      fertile:{label:'Fertile Window',desc:'High fertility these days ✨',pills:['🌸 Fertile','⚡ Active']},
+      ovulation:{label:'Ovulation Day',desc:'Peak fertility today! 🥚',pills:['🥚 Ovulation','⚡ Peak Energy']},
+      luteal:{label:'Luteal Phase',desc:'PMS possible — be gentle',pills:['🌙 Luteal','🧘 Calm']},
+      follicular:{label:'Follicular Phase',desc:'Energy is rising! 💪',pills:['🌱 Follicular','💪 Energy Up']}
+    };
+    
+    const p = phaseInfo[S.phase]||phaseInfo.follicular;
+    document.getElementById('cyc-status').textContent = p.label;
+    document.getElementById('cyc-desc').textContent = p.desc;
+    
+    const cls = {period:'pp-per',fertile:'pp-fer',ovulation:'pp-ov',luteal:'pp-lut',follicular:'pp-lut'}[S.phase];
+    document.getElementById('phase-pills').innerHTML =
+      p.pills.map(x=>`<span class="ppill ${cls}">${x}</span>`).join('')+
+      `<span class="ppill pp-lut">📅 Next: ${S.cycleLen-day}d</span>`;
+  }
+
+  function updatePain(v){
+    S.painLevel=parseInt(v);
+    document.getElementById('pain-sl').value=v;
+    const msgs=['😊 None','😊 Very mild','😌 Mild','😐 Noticeable','😣 Moderate','😣 Uncomfortable','😢 Strong','😭 Severe','😭 Very severe','🆘 Extreme','🆘 Unbearable'];
+    document.getElementById('pain-txt').textContent=`Pain: ${v}/10 — ${msgs[parseInt(v)]}`;
+    document.body.className = (S.painLevel>=7?'pain-high ':'') + (S.moodClass?'m-'+S.moodClass:'');
+  }
+
+  async function selectMood(btn, emoji, label, cls){
+    document.querySelectorAll('.mb').forEach(b=>b.classList.remove('sel'));
+    btn.classList.add('sel');
+    S.mood={emoji,label}; S.moodClass=cls;
+    updatePain(S.painLevel);
+    
+    if(currentUser){
+      const today=new Date().toISOString().split('T')[0];
+      try {
+          await setDoc(doc(db, 'users', currentUser.uid, 'mood_logs', today), {
+              log_date: today, mood_emoji: emoji, mood_label: label, timestamp: serverTimestamp()
+          }, { merge: true });
+      } catch(e) { console.error("Firestore error:", e); }
+    }
+    showToast(`Mood: ${emoji} ${label}`);
+  }
+
+  function toggleSymptom(chip){
+    chip.classList.toggle('active');
+    const label = chip.textContent.trim();
+    if(chip.classList.contains('active')&&!S.symptoms.includes(label)) S.symptoms.push(label);
+    else S.symptoms = S.symptoms.filter(s=>s!==label);
+  }
+
+  async function saveSymptoms(){
+    if(!currentUser) return;
+    const today=new Date().toISOString().split('T')[0];
+    try {
+      await setDoc(doc(db, 'users', currentUser.uid, 'symptom_logs', today), {
+        log_date: today, symptoms: S.symptoms, pain_level: S.painLevel, timestamp: serverTimestamp()
+      }, { merge: true });
+      showToast(`Symptoms saved! ✅`);
+    } catch(e) {
+      console.error(e);
+      showToast('❌ Failed to save to database');
+    }
+  }
+
+  function renderCups(){
+    let html='';
+    for(let i=0;i<8;i++) html+=`<div class="cup${i<S.todayHydration?' filled':''}" onclick="AppBridge.tapCup(${i})">💧</div>`;
+    document.getElementById('h2o-cups').innerHTML=html;
+    document.getElementById('h2o-lbl').textContent=`${S.todayHydration} / 8 glasses`;
+  }
+
+  async function tapCup(i){
+    S.todayHydration = (i<S.todayHydration)?i:i+1;
+    renderCups();
+    if(currentUser){
+      const today=new Date().toISOString().split('T')[0];
+      try {
+          await setDoc(doc(db, 'users', currentUser.uid, 'hydration_logs', today), {
+              log_date: today, glasses_count: S.todayHydration
+          }, { merge: true });
+      } catch(e) {}
+    }
+  }
+
+  function openLogModal(){ document.getElementById('log-modal').classList.add('show'); }
+  function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+  function selFlow(btn, type){
+    btn.closest('.flow-sel').querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); S.selectedFlow=type;
+  }
+
+  async function confirmLog(){
+    if(!currentUser) return;
+    const notes=document.getElementById('log-notes').value;
+    const today=new Date().toISOString().split('T')[0];
+    
+    try {
+      await setDoc(doc(db, 'users', currentUser.uid, 'cycle_logs', today), {
+        log_date: today, flow_intensity: S.selectedFlow, notes: notes, timestamp: serverTimestamp()
+      }, { merge: true });
+      
+      await setDoc(doc(db, 'users', currentUser.uid), { last_period_date: today }, { merge: true });
+      S.lastPeriod=today;
+      
+      closeModal('log-modal');
+      updateCycleRing(); buildCalendar(); loadLogbook();
+      showToast('Period logged! 🩸 Feel better soon 💜');
+    } catch(e) {
+      console.error(e);
+      showToast('❌ Error saving log. Check Firestore Rules.');
+    }
+  }
+
+  async function loadLogbook(){
+    const el=document.getElementById('logbook-list');
+    if(!currentUser){el.innerHTML='<div class="empty"><span class="e-ico">📋</span>Login to see your logbook</div>';return;}
+    
+    try {
+      const q = query(collection(db, 'users', currentUser.uid, 'cycle_logs'), orderBy('log_date', 'desc'), limit(20));
+      const snapshot = await getDocs(q);
+      
+      if(snapshot.empty){el.innerHTML='<div class="empty"><span class="e-ico">📋</span>No period logs yet. Log your first period! 🌸</div>';return;}
+      
+      let html = '';
+      snapshot.forEach(document => {
+        const l = document.data();
+        html += `
+        <div class="log-entry">
+          <div class="log-badge">${new Date(l.log_date).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
+          <div class="log-det">
+            <h4>🩸 ${(l.flow_intensity||'').charAt(0).toUpperCase()+(l.flow_intensity||'').slice(1)} Flow</h4>
+            ${l.notes?`<p>${l.notes}</p>`:''}
+          </div>
+        </div>`;
+      });
+      el.innerHTML = html;
+    } catch(e) {
+      console.error(e);
+      el.innerHTML='<div class="empty" style="color:var(--rose)">Cannot load database. Make sure Firestore rules are enabled (Test Mode).</div>';
+    }
+  }
+
+  function buildCalendar(){
+    const yr=S.calYear, mo=S.calMonth;
+    const mNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    document.getElementById('cal-month').textContent = `${mNames[mo]} ${yr}`;
+    const first = new Date(yr,mo,1).getDay();
+    const days = new Date(yr,mo+1,0).getDate();
+    const today = new Date();
+
+    const periodD=new Set(), predD=new Set(), fertileD=new Set(), ovD=new Set();
+    if(S.lastPeriod){
+      const last = new Date(S.lastPeriod);
+      for(let c=-3;c<=6;c++){
+        const cs = new Date(last); cs.setDate(last.getDate()+c*S.cycleLen);
+        for(let d=0;d<S.periodDur;d++){
+          const pd=new Date(cs); pd.setDate(cs.getDate()+d);
+          if(pd.getFullYear()===yr&&pd.getMonth()===mo){
+            (pd<=today?periodD:predD).add(pd.getDate());
+          }
+        }
+        const ov=new Date(cs); ov.setDate(cs.getDate()+Math.round(S.cycleLen/2));
+        for(let f=-2;f<=2;f++){
+          const fd=new Date(ov); fd.setDate(ov.getDate()+f);
+          if(fd.getFullYear()===yr&&fd.getMonth()===mo){
+            f===0?ovD.add(fd.getDate()):fertileD.add(fd.getDate());
+          }
+        }
+      }
+    }
+
+    let html='';
+    for(let i=0;i<first;i++) html+=`<div class="cd empty"></div>`;
+    for(let d=1;d<=days;d++){
+      const isTdy = today.getDate()===d&&today.getMonth()===mo&&today.getFullYear()===yr;
+      let cls='cd';
+      if(isTdy) cls+=' today';
+      else if(ovD.has(d)) cls+=' ovulation';
+      else if(fertileD.has(d)) cls+=' fertile';
+      else if(periodD.has(d)) cls+=' period';
+      else if(predD.has(d)) cls+=' predicted';
+      html+=`<div class="${cls}">${d}</div>`;
+    }
+    document.getElementById('cal-grid').innerHTML = html;
+  }
+
+  function chMonth(dir){
+    S.calMonth+=dir;
+    if(S.calMonth>11){S.calMonth=0;S.calYear++;}
+    if(S.calMonth<0){S.calMonth=11;S.calYear--;}
+    buildCalendar();
+  }
+
+  async function loadAffirmation(){
+    const el=document.getElementById('aff-text');
+    el.textContent='Generating your affirmation...';
+    try{
+      const prompt=`Generate ONE short, powerful affirmation (1-2 sentences) for a woman who:
+- Is currently in her ${S.phase} cycle phase
+- Is feeling: ${S.mood?.label||'neutral'}
+- Pain level: ${S.painLevel}/10
+Make it warm and empowering. No quotes.`;
+      const text = await gemini(prompt,'You are a compassionate wellness coach.',0.95);
+      el.textContent = text.trim().replace(/^["']|["']$/g,'');
+    } catch(e){
+      el.textContent="You are strong, beautiful, and worthy of love — every single day.";
+    }
+  }
+
+  async function sendChat(){
+    const inp=document.getElementById('ai-inp');
+    const text=inp.value.trim(); if(!text) return;
+    inp.value='';
+    
+    const msgs=document.getElementById('ai-msgs');
+    const userDiv=document.createElement('div'); userDiv.className='cmsg user'; userDiv.textContent=text;
+    msgs.appendChild(userDiv); msgs.scrollTop=msgs.scrollHeight;
+    
+    try{
+      const response=await gemini(`User says: ${text}`, "You are Sakhi, an empathetic AI Period Tracker Assistant. Keep answers under 60 words and be sweet.");
+      const botDiv=document.createElement('div'); botDiv.className='cmsg bot'; botDiv.textContent=response;
+      msgs.appendChild(botDiv); msgs.scrollTop=msgs.scrollHeight;
+    } catch(e){ showToast("Chat error. Check your network or API Keys."); }
+  }
+
+  function showScreen(name){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+    document.getElementById('screen-'+name)?.classList.add('active');
+    document.getElementById('nav-'+name)?.classList.add('active');
+    document.getElementById('app-hdr').style.display=name==='home'?'block':'none';
+    window.scrollTo(0,0);
+    if(name === 'logbook') loadLogbook();
+  }
+
+  function toggleSection(id){
+    const el=document.getElementById(id);
+    el.style.display=el.style.display==='none'?'block':'none';
+  }
+
+  function toggleChat(){ document.getElementById('ai-panel').classList.toggle('open'); }
+
+  /* ════════════════════════════════════════
+     REGISTER GLOBALS FOR HTML
+     ════════════════════════════════════════ */
+  window.AppBridge = {
+    togglePwd, switchTab, selLang, doAuth, doLogout, showScreen, 
+    toggleSection, updatePain, selectMood, toggleSymptom, saveSymptoms, 
+    tapCup, openLogModal, closeModal, selFlow, confirmLog, loadLogbook, 
+    chMonth, loadAffirmation, sendChat, toggleChat
+  };
+
+  /* ════════════════════════════════════════
+     LISTENER SETUP
+     ════════════════════════════════════════ */
+  if(auth) {
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        await loadProfile();
+        showApp();
+      } else {
+        document.getElementById('auth-ov').style.display='flex';
+        document.getElementById('app').style.display='none';
+      }
+    });
+  }
+
+  document.querySelectorAll('.modal').forEach(m=>{
+    m.addEventListener('click', e => { if(e.target===m) m.classList.remove('show'); });
+  });
+
+</script>
+</body>
+</html>
